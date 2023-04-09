@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Maps - Riga, Latvia</title>
+    <style>
+        html, body, #map {
+            position: relative;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.1.1/d3.min.js"></script>
+    <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCxMW1qYOWv_4JzuMsv9JkfPBbGSeIFVPY&callback=initMap&libraries=geometry,places"></script>
+    <script>
+        function initMap() {
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: 56.9496, lng: 24.1052},
+                zoom: 12
+            });
+
+            // Create the search box element
+            var input = document.createElement('input');
+            input.id = 'search-box';
+            input.className = 'shadow-md border-2 p-2 rounded';
+            input.type = 'text';
+            input.placeholder = 'Search for a place...';
+            input.style.position = 'absolute';
+            input.style.top = '10px';
+            input.style.left = '50%';
+            input.style.transform = 'translateX(-50%)';
+            input.style.zIndex = '1';
+
+            // Append the search box element to the body
+            document.body.appendChild(input);
+
+            // Create the search box and link it to the UI element
+            var searchBox = new google.maps.places.SearchBox(input);
+            // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            // Bias the SearchBox results towards the current map's viewport
+            map.addListener('bounds_changed', function () {
+                searchBox.setBounds(map.getBounds());
+            });
+
+            // Add event listener for clicks on the map
+            google.maps.event.addListener(map, 'click', function (event) {
+                placeMarker(event.latLng, map);
+            });
+
+            // Initialize an empty array to store the markers
+            var markers = [];
+
+            function placeMarker(location, map) {
+                var marker = new google.maps.Marker({
+                    position: location,
+                    map: map
+                });
+
+                markers.push(marker);
+
+                if (markers.length === 2) {
+                    var distance = google.maps.geometry.spherical.computeDistanceBetween(markers[0].getPosition(), markers[1].getPosition());
+                    document.getElementById("distance").innerText = (distance / 1000).toFixed(2) + " km";
+                } else if (markers.length > 2) {
+                    markers[0].setMap(null);
+                    markers.shift();
+                    var distance = google.maps.geometry.spherical.computeDistanceBetween(markers[0].getPosition(), markers[1].getPosition());
+                    document.getElementById("distance").innerText = (distance / 1000).toFixed(2) + " km";
+                }
+            }
+
+// Listen for the event fired when the user selects a prediction and retrieve
+// more details for that place
+            searchBox.addListener('places_changed', function () {
+                var places = searchBox.getPlaces();
+
+                if (places.length === 0) {
+                    return;
+                }
+
+                // For each place, get the icon, name, and location
+                var bounds = new google.maps.LatLngBounds();
+                places.forEach(function (place) {
+                    if (!place.geometry) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+
+                    if (place.geometry.viewport) {
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+
+                // Extend the bounds to include any existing markers on the map
+                // markers.forEach(function (marker) {
+                //     bounds.extend(marker.getPosition());
+                // });
+
+                // Fit the map to the new bounds
+                map.fitBounds(bounds);
+            });
+        }
+    </script>
+</head>
+<body>
+<div id="map"></div>
+<div class="absolute top-0 right-0 p-4 bg-white shadow-md">
+    <p class="text-sm">Distance: <span id="distance" class="font-semibold">0 km</span></p>
+</div>
+</body>
+</html>
