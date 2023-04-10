@@ -12,20 +12,15 @@
             padding: 0;
         }
 
-        @media (min-width: 640px) {
-            #search-box {
-                top: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
+        body {
+            position: relative;
         }
 
-        @media (max-width: 639px) {
-            #search-box {
-                bottom: 10px;
-                left: 10px;
-                transform: none;
-            }
+        #search-box {
+            top: 80px;
+            left: 50%;
+            width: 80%;
+            transform: translateX(-50%);
         }
 
     </style>
@@ -35,12 +30,13 @@
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCxMW1qYOWv_4JzuMsv9JkfPBbGSeIFVPY&callback=initMap&libraries=geometry,places"></script>
     <script>
         function initMap() {
+
             var map = new google.maps.Map(document.getElementById('map'), {
                 center: {lat: 56.9496, lng: 24.1052},
                 zoom: 12
             });
 
-            // Create the search box element
+// Create the search box element
             var input = document.createElement('input');
             input.id = 'search-box';
             input.className = 'shadow-md border-2 p-2 rounded';
@@ -49,7 +45,7 @@
             input.style.position = 'absolute';
             input.style.zIndex = '1';
 
-            // Append the search box element to the body
+// Append the wrapper to the body
             document.body.appendChild(input);
 
             // Create the search box and link it to the UI element
@@ -111,11 +107,6 @@
                         bounds.extend(place.geometry.location);
                     }
                 });
-
-                // Extend the bounds to include any existing markers on the map
-                // markers.forEach(function (marker) {
-                //     bounds.extend(marker.getPosition());
-                // });
 
                 // Fit the map to the new bounds
                 map.fitBounds(bounds);
