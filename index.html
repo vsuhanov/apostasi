@@ -11,6 +11,23 @@
             margin: 0;
             padding: 0;
         }
+
+        @media (min-width: 640px) {
+            #search-box {
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (max-width: 639px) {
+            #search-box {
+                bottom: 10px;
+                left: 10px;
+                transform: none;
+            }
+        }
+
     </style>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.1.1/d3.min.js"></script>
@@ -30,9 +47,6 @@
             input.type = 'text';
             input.placeholder = 'Search for a place...';
             input.style.position = 'absolute';
-            input.style.top = '10px';
-            input.style.left = '50%';
-            input.style.transform = 'translateX(-50%)';
             input.style.zIndex = '1';
 
             // Append the search box element to the body
