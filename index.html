@@ -101,6 +101,9 @@
             alt = alt || event.domEvent.metaKey || event.domEvent.ctrlKey;
             placeMarker(event.latLng, map, alt);
             event.stop();
+            if(event.domEvent.metaKey || event.domEvent.ctrlKey) {
+                alt = false;
+            }
         });
         document.getElementById('hold-first-pin').addEventListener('click', (event) => {
             alt = event.target.checked;
