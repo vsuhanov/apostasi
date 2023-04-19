@@ -16,13 +16,27 @@
             position: relative;
         }
 
-        #search-box {
+
+        .controls {
+            position: absolute;
+            z-index: 1;
+            overflow: auto;
             top: 80px;
             left: 50%;
             width: 80%;
             transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
         }
 
+        .hold-first-pin {
+            display: none;
+        }
+        @media only screen and (max-width: 600px) {
+            .hold-first-pin {
+                display: block;
+            }
+        }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.16/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.1.1/d3.min.js"></script>
@@ -35,41 +49,13 @@
                 center: {lat: 56.9496, lng: 24.1052},
                 zoom: 12
             });
-            var marker1 = new google.maps.Marker({
-                position: { lat: -34.397, lng: 150.644 },
-                map: map,
-                title: 'Marker 1'
-            });
-
-            var marker2 = new google.maps.Marker({
-                position: { lat: -34.397, lng: 150.647 },
-                map: map,
-                title: 'Marker 2'
-            });
-
-            map.addListener('click', function(event) {
-                if (event.metaKey || event.ctrlKey || event.touches.length > 1) {
-                    marker2.setPosition(event.latLng);
-                } else {
-                    marker1.setPosition(event.latLng);
-                }
-            });
-
 
 // Create the search box element
-            var input = document.createElement('input');
-            input.id = 'search-box';
-            input.className = 'shadow-md border-2 p-2 rounded';
-            input.type = 'text';
-            input.placeholder = 'Search for a place...';
-            input.style.position = 'absolute';
-            input.style.zIndex = '1';
 
 // Append the wrapper to the body
-            document.body.appendChild(input);
-
+            const input = document.getElementById('search-box');
             // Create the search box and link it to the UI element
-            var searchBox = new google.maps.places.SearchBox(input);
+            const searchBox = new google.maps.places.SearchBox(input);
             // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
             // Bias the SearchBox results towards the current map's viewport
@@ -77,19 +63,18 @@
                 searchBox.setBounds(map.getBounds());
             });
 
-            // Add event listener for clicks on the map
-            google.maps.event.addListener(map, 'click', function (event) {
-                if (event.domEvent.metaKey || event.domEvent.ctrlKey || event.domEvent.touches.length > 1) {
-                    marker2.setPosition(event.latLng);
-                } else {
-                    marker1.setPosition(event.latLng);
-                }
-            });
 
             // Initialize an empty array to store the markers
             var markers = [];
 
-            function placeMarker(location, map) {
+            // Add event listener for clicks on the map
+            google.maps.event.addListener(map, 'click', function (event) {
+                const alt = event.domEvent.metaKey || event.domEvent.ctrlKey;
+                placeMarker(event.latLng, map, alt);
+                event.stop();
+            });
+
+            function placeMarker(location, map, alt = false) {
                 var marker = new google.maps.Marker({
                     position: location,
                     map: map
@@ -97,12 +82,17 @@
 
                 markers.push(marker);
 
-                if (markers.length === 2) {
-                    var distance = google.maps.geometry.spherical.computeDistanceBetween(markers[0].getPosition(), markers[1].getPosition());
-                    document.getElementById("distance").innerText = (distance / 1000).toFixed(2) + " km";
-                } else if (markers.length > 2) {
-                    markers[0].setMap(null);
-                    markers.shift();
+                if (markers.length > 2) {
+                    if (alt) {
+                        markers[1].setMap(null);
+                        markers.splice(1, 1);
+                    } else {
+                        markers[0].setMap(null);
+                        markers.shift();
+                    }
+
+                }
+                if (markers.length >= 2) {
                     var distance = google.maps.geometry.spherical.computeDistanceBetween(markers[0].getPosition(), markers[1].getPosition());
                     document.getElementById("distance").innerText = (distance / 1000).toFixed(2) + " km";
                 }
@@ -143,5 +133,23 @@
 <div class="absolute top-0 right-0 p-4 bg-white shadow-md">
     <p class="text-sm">Distance: <span id="distance" class="font-semibold">0 km</span></p>
 </div>
+<div>
+
+</div>
+<!--var input = document.createElement('input');-->
+<!--input.id = 'search-box';-->
+<!--input.className = 'shadow-md border-2 p-2 rounded';-->
+<!--input.type = 'text';-->
+<!--input.placeholder = 'Search for a place...';-->
+<!--input.style.position = 'absolute';-->
+<!--input.style.zIndex = '1';-->
+<div class="controls">
+    <input type="text" id="search-box" placeholder="Search for a place..." class="shadow-md border-2 p-2 rounded">
+    <label for="hold-first-pin" class="hold-first-pin">
+        <input type="checkbox" id="hold-first-pin">
+        Hold first pin
+    </label>
+</div>
+
 </body>
 </html>
