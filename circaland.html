@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year Circle</title>
+    <style>
+        /* Add your CSS styles here */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="yearCircle" width="500" height="500"></canvas>
+    <p id="selectedDay"></p>
+    <script>
+        // Add your JavaScript code here
+
+        let hoveredDay = null;
+        const canvas = document.getElementById('yearCircle');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth * 0.8;
+        canvas.height = window.innerHeight * 0.8;
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const outerRadius = Math.min(canvas.width, canvas.height) / 2 - 10;
+        const innerRadius = outerRadius * 0.6;
+        const borderWidth = 2;
+
+        const seasons = [
+            {name: 'Winter', color: '#89CFF0', months: [0, 1, 11]}, // Pastel blue
+            {name: 'Spring', color: '#77DD77', months: [2, 3, 4]}, // Pastel green
+            {name: 'Summer', color: '#FFCC99', months: [5, 6, 7]}, // Pastel orange
+            {name: 'Autumn', color: '#FDFD96', months: [8, 9, 10]}, // Pastel yellow
+        ];
+
+        const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+
+        if (isLeapYear(new Date().getFullYear())) {
+            monthDays[1] = 29;
+        }
+        const totalDays = monthDays.reduce((a, b) => a + b);
+        const halfMonthRadians = 0 / monthDays.reduce((a, b) => a + b) * 2 * Math.PI;
+
+        function drawCircle() {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, outerRadius, 0, 2 * Math.PI);
+            ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI, true);
+            ctx.closePath();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = borderWidth;
+            ctx.stroke();
+        }
+
+        function drawSegments() {
+            let currentAngle = -Math.PI / 2 - halfMonthRadians;
+
+            monthDays.forEach((days, month) => {
+                const season = seasons.find(s => s.months.includes(month));
+                const angle = (days / totalDays) * 2 * Math.PI;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX + innerRadius * Math.cos(currentAngle), centerY + innerRadius * Math.sin(currentAngle));
+                ctx.lineTo(centerX + outerRadius * Math.cos(currentAngle), centerY + outerRadius * Math.sin(currentAngle));
+                ctx.arc(centerX, centerY, outerRadius, currentAngle, currentAngle + angle);
+                ctx.lineTo(centerX + innerRadius * Math.cos(currentAngle + angle), centerY + innerRadius * Math.sin(currentAngle + angle));
+                ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
+                ctx.closePath();
+                ctx.fillStyle = season.color;
+                ctx.fill();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = borderWidth;
+                ctx.stroke();
+
+                currentAngle += angle;
+            });
+        }
+
+        function drawDays() {
+            let currentAngle = -Math.PI / 2 - halfMonthRadians;
+            let dayCount = 0;
+            ctx.strokeStyle = 'black';
+
+            for (let month = 0; month < monthDays.length; month++) {
+                for (let day = 1; day <= monthDays[month]; day++) {
+                    const angle = (1 / totalDays) * 2 * Math.PI;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, outerRadius, currentAngle, currentAngle + angle);
+                    ctx.arc(centerX, centerY, innerRadius, currentAngle + angle, currentAngle, true);
+                    ctx.closePath();
+                    ctx.fillStyle = getSeasonColor(day, month);
+                    ctx.fill();
+
+                    // Enlarge the border for the 1st of January and the last day of each month
+                    if ((month === 0 && day === 1) || day === monthDays[month]) {
+                        ctx.lineWidth = 3;
+                    } else {
+                        ctx.lineWidth = 1;
+                    }
+                    ctx.stroke();
+
+                    dayCount++;
+                    currentAngle += angle;
+                }
+            }
+        }
+
+        function getSeasonColor(day, month) {
+            const season = seasons.find(s => s.months.includes(month));
+            return season.color;
+        }
+
+        function handleClick(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const dx = x - centerX;
+            const dy = y - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= outerRadius && distance >= innerRadius) {
+                const angle = Math.atan2(dy, dx);
+                let normalizedAngle = angle + Math.PI / 2;
+                if (normalizedAngle < 0) {
+                    normalizedAngle += 2 * Math.PI;
+                }
+
+                const dayOfYear = Math.ceil(normalizedAngle / (2 * Math.PI) * totalDays);
+
+                let dayCount = 0;
+                let selectedMonth = 0;
+
+                for (let i = 0; i < monthDays.length; i++) {
+                    dayCount += monthDays[i];
+                    if (dayOfYear <= dayCount) {
+                        selectedMonth = i;
+                        break;
+                    }
+                }
+
+            } else {
+                document.getElementById('selectedDay').textContent = '';
+            }
+        }
+
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCircle();
+            drawSegments();
+            drawDays();
+
+            if (hoveredDay) {
+                drawHoveredDay();
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+
+        function handleMouseMove(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const dx = x - centerX;
+            const dy = y - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= outerRadius && distance >= innerRadius) {
+                const angle = Math.atan2(dy, dx);
+                let normalizedAngle = angle + Math.PI / 2;
+                if (normalizedAngle < 0) {
+                    normalizedAngle += 2 * Math.PI;
+                }
+
+                const dayOfYear = Math.ceil(normalizedAngle / (2 * Math.PI) * totalDays);
+
+                let dayCount = 0;
+                let selectedMonth = 0;
+
+                for (let i = 0; i < monthDays.length; i++) {
+                    dayCount += monthDays[i];
+                    if (dayOfYear <= dayCount) {
+                        selectedMonth = i;
+                        break;
+                    }
+                }
+
+                const selectedDay = dayOfYear - (dayCount - monthDays[selectedMonth]);
+
+                hoveredDay = {
+                    day: selectedDay,
+                    month: selectedMonth,
+                    angle: {
+                        start: normalizedAngle - (1 / totalDays) * 2 * Math.PI,
+                        end: normalizedAngle,
+                    },
+                };
+            } else {
+                hoveredDay = null;
+            }
+        }
+
+        function drawHoveredDay() {
+            const {day: selectedDay, month, angle} = hoveredDay;
+
+            const enlargedRadius = outerRadius * 1.1;
+            const contractedRadius = innerRadius * 0.9;
+
+            const offsetAngle = angle.start;
+
+            ctx.beginPath();
+            ctx.moveTo(centerX + contractedRadius * Math.cos(offsetAngle), centerY + contractedRadius * Math.sin(offsetAngle));
+            ctx.lineTo(centerX + enlargedRadius * Math.cos(offsetAngle), centerY + enlargedRadius * Math.sin(offsetAngle));
+            ctx.arc(centerX, centerY, enlargedRadius, offsetAngle, angle.end);
+            ctx.lineTo(centerX + contractedRadius * Math.cos(angle.end), centerY + contractedRadius * Math.sin(angle.end));
+            ctx.arc(centerX, centerY, contractedRadius, angle.end, offsetAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = '#AEC6CF'; // Pastel hover color
+            ctx.fill();
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            const dayOfYear = Math.ceil(angle.end / (2 * Math.PI) * totalDays);
+
+            let dayCount = 0;
+            let selectedMonth = 0;
+
+            for (let i = 0; i < monthDays.length; i++) {
+                dayCount += monthDays[i];
+                if (dayOfYear <= dayCount) {
+                    selectedMonth = i;
+                    break;
+                }
+            }
+
+            document.getElementById('selectedDay').textContent = `Selected Day: ${selectedDay} ${MONTH_NAMES[selectedMonth]}`;
+        }
+
+        function isLeapYear(year) {
+            return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+        }
+
+        draw();
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('click', handleClick);
+    </script>
+</body>
+
+</html>
