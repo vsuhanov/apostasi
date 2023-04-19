@@ -59,8 +59,8 @@
 
             // Add event listener for clicks on the map
             google.maps.event.addListener(map, 'click', function (event) {
-                event.preventDefault();
                 placeMarker(event.latLng, map);
+                event.stop();
             });
 
             // Initialize an empty array to store the markers
