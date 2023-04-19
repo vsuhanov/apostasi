@@ -35,6 +35,26 @@
                 center: {lat: 56.9496, lng: 24.1052},
                 zoom: 12
             });
+            var marker1 = new google.maps.Marker({
+                position: { lat: -34.397, lng: 150.644 },
+                map: map,
+                title: 'Marker 1'
+            });
+
+            var marker2 = new google.maps.Marker({
+                position: { lat: -34.397, lng: 150.647 },
+                map: map,
+                title: 'Marker 2'
+            });
+
+            map.addListener('click', function(event) {
+                if (event.metaKey || event.ctrlKey || event.touches.length > 1) {
+                    marker2.setPosition(event.latLng);
+                } else {
+                    marker1.setPosition(event.latLng);
+                }
+            });
+
 
 // Create the search box element
             var input = document.createElement('input');
@@ -59,8 +79,11 @@
 
             // Add event listener for clicks on the map
             google.maps.event.addListener(map, 'click', function (event) {
-                placeMarker(event.latLng, map);
-                event.stop();
+                if (event.domEvent.metaKey || event.domEvent.ctrlKey || event.domEvent.touches.length > 1) {
+                    marker2.setPosition(event.latLng);
+                } else {
+                    marker1.setPosition(event.latLng);
+                }
             });
 
             // Initialize an empty array to store the markers
