@@ -32,6 +32,7 @@
         .hold-first-pin {
             display: none;
         }
+
         @media only screen and (max-width: 600px) {
             .hold-first-pin {
                 display: block;
@@ -42,91 +43,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.1.1/d3.min.js"></script>
     <script async defer
             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCxMW1qYOWv_4JzuMsv9JkfPBbGSeIFVPY&callback=initMap&libraries=geometry,places"></script>
-    <script>
-        function initMap() {
 
-            var map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: 56.9496, lng: 24.1052},
-                zoom: 12
-            });
-
-// Create the search box element
-
-// Append the wrapper to the body
-            const input = document.getElementById('search-box');
-            // Create the search box and link it to the UI element
-            const searchBox = new google.maps.places.SearchBox(input);
-            // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-
-            // Bias the SearchBox results towards the current map's viewport
-            map.addListener('bounds_changed', function () {
-                searchBox.setBounds(map.getBounds());
-            });
-
-
-            // Initialize an empty array to store the markers
-            var markers = [];
-
-            // Add event listener for clicks on the map
-            google.maps.event.addListener(map, 'click', function (event) {
-                const alt = event.domEvent.metaKey || event.domEvent.ctrlKey;
-                placeMarker(event.latLng, map, alt);
-                event.stop();
-            });
-
-            function placeMarker(location, map, alt = false) {
-                var marker = new google.maps.Marker({
-                    position: location,
-                    map: map
-                });
-
-                markers.push(marker);
-
-                if (markers.length > 2) {
-                    if (alt) {
-                        markers[1].setMap(null);
-                        markers.splice(1, 1);
-                    } else {
-                        markers[0].setMap(null);
-                        markers.shift();
-                    }
-
-                }
-                if (markers.length >= 2) {
-                    var distance = google.maps.geometry.spherical.computeDistanceBetween(markers[0].getPosition(), markers[1].getPosition());
-                    document.getElementById("distance").innerText = (distance / 1000).toFixed(2) + " km";
-                }
-            }
-
-// Listen for the event fired when the user selects a prediction and retrieve
-// more details for that place
-            searchBox.addListener('places_changed', function () {
-                var places = searchBox.getPlaces();
-
-                if (places.length === 0) {
-                    return;
-                }
-
-                // For each place, get the icon, name, and location
-                var bounds = new google.maps.LatLngBounds();
-                places.forEach(function (place) {
-                    if (!place.geometry) {
-                        console.log("Returned place contains no geometry");
-                        return;
-                    }
-
-                    if (place.geometry.viewport) {
-                        bounds.union(place.geometry.viewport);
-                    } else {
-                        bounds.extend(place.geometry.location);
-                    }
-                });
-
-                // Fit the map to the new bounds
-                map.fitBounds(bounds);
-            });
-        }
-    </script>
 </head>
 <body>
 <div id="map"></div>
@@ -152,4 +69,95 @@
 </div>
 
 </body>
+<script>
+    function initMap() {
+
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 56.9496, lng: 24.1052},
+            zoom: 12
+        });
+
+// Create the search box element
+
+// Append the wrapper to the body
+        const input = document.getElementById('search-box');
+        // Create the search box and link it to the UI element
+        const searchBox = new google.maps.places.SearchBox(input);
+        // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+        // Bias the SearchBox results towards the current map's viewport
+        map.addListener('bounds_changed', function () {
+            searchBox.setBounds(map.getBounds());
+        });
+
+
+        // Initialize an empty array to store the markers
+        var markers = [];
+
+        let alt = false;
+        // Add event listener for clicks on the map
+        google.maps.event.addListener(map, 'click', function (event) {
+            alt = alt || event.domEvent.metaKey || event.domEvent.ctrlKey;
+            placeMarker(event.latLng, map, alt);
+            event.stop();
+        });
+        document.getElementById('hold-first-pin').addEventListener('click', (event) => {
+            alt = event.target.checked;
+        })
+
+
+        function placeMarker(location, map, alt = false) {
+            var marker = new google.maps.Marker({
+                position: location,
+                map: map
+            });
+
+            markers.push(marker);
+
+            if (markers.length > 2) {
+                if (alt) {
+                    markers[1].setMap(null);
+                    markers.splice(1, 1);
+                } else {
+                    markers[0].setMap(null);
+                    markers.shift();
+                }
+
+            }
+            if (markers.length >= 2) {
+                var distance = google.maps.geometry.spherical.computeDistanceBetween(markers[0].getPosition(), markers[1].getPosition());
+                document.getElementById("distance").innerText = (distance / 1000).toFixed(2) + " km";
+            }
+        }
+
+// Listen for the event fired when the user selects a prediction and retrieve
+// more details for that place
+        searchBox.addListener('places_changed', function () {
+            var places = searchBox.getPlaces();
+
+            if (places.length === 0) {
+                return;
+            }
+
+            // For each place, get the icon, name, and location
+            var bounds = new google.maps.LatLngBounds();
+            places.forEach(function (place) {
+                if (!place.geometry) {
+                    console.log("Returned place contains no geometry");
+                    return;
+                }
+
+                if (place.geometry.viewport) {
+                    bounds.union(place.geometry.viewport);
+                } else {
+                    bounds.extend(place.geometry.location);
+                }
+            });
+
+            // Fit the map to the new bounds
+            map.fitBounds(bounds);
+        });
+    }
+
+</script>
 </html>
